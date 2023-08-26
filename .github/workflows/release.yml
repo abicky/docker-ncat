@@ -1,0 +1,34 @@
+name: Release
+
+on:
+  push:
+    tags: 'v*.*'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - id: meta
+        uses: docker/metadata-action@v4
+        with:
+          images: abicky/ncat
+          tags: |
+            type=match,pattern=v(.*),group=1
+            type=match,pattern=v(\d+\.\d+),group=1
+            type=match,pattern=v(\d+),group=1
+
+      - uses: docker/setup-qemu-action@v2
+
+      - uses: docker/setup-buildx-action@v2
+
+      - uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - uses: docker/build-push-action@v4
+        with:
+          push: true
+          platforms: linux/amd64,linux/arm64
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
